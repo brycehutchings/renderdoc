@@ -102,7 +102,19 @@ inline uint64_t CountTrailingZeroes(uint64_t value)
 
 inline uint32_t CountOnes(uint32_t value)
 {
+#if defined(_M_ARM) || defined(_M_ARM64)
+  // __popcnt instrinsic is not available on ARM.
+  // https://bajamircea.github.io/coding/cpp/2017/10/10/counting-bits-better-groups.html
+  // "8.6 Efficient Implementation of Population-Count Function in 32-Bit Mode"
+  value -= (value >> 1) & 0x55555555;                            // 5 is 0101 in binary
+  value = (value & 0x33333333) + ((value >> 2) & 0x33333333);    // 3 is 0011 in binary
+  value = (value + (value >> 4)) & 0x0f0f0f0f;
+  value *= 0x1010101;    // magic multiplier
+  value >>= 24;
+  return value;
+#else
   return __popcnt(value);
+#endif
 }
 
 #if ENABLED(RDOC_X64)
@@ -111,4 +123,4 @@ inline uint64_t CountOnes(uint64_t value)
   return __popcnt64(value);
 }
 #endif
-};
+};    // namespace Bits

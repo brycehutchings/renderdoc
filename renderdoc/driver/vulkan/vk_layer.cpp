@@ -252,7 +252,7 @@ VKAPI_ATTR void VKAPI_CALL hooked_vkDestroyInstance(VkInstance instance,
 
 // Layer Intercepts
 
-#if ENABLED(RDOC_WIN32) && DISABLED(RDOC_X64)
+#if ENABLED(RDOC_WIN32) && DISABLED(RDOC_X64) && !(defined(_M_ARM) || defined(_M_ARM64))
 
 // Win32 __stdcall will still mangle even with extern "C", set up aliases
 

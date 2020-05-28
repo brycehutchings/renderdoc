@@ -392,6 +392,17 @@ public:
   };
 };
 
+typedef Vec4<float> CMP_Vec4f;
+typedef Vec4<double> CMP_Vec4d;
+typedef Vec4<int> CMP_Vec4i;
+typedef Vec4<unsigned int> CMP_Vec4ui;     // unsigned 16 bit x,y,x,w
+typedef Vec4<unsigned char> CMP_Vec4uc;    // unsigned 8  bit x,y,x,w
+
+typedef Vec4<unsigned char> CGU_Vec4uc;    // unsigned 8  bit x,y,x,w
+typedef Vec4<unsigned char> CGV_Vec4uc;    // unsigned 8  bit x,y,x,w
+
+#if defined(_M_IX86) || defined(_M_X64)    // xmmintrin.h is specific to Intel
+
 #include <float.h>
 #include <math.h>
 #include <stdio.h>
@@ -560,15 +571,8 @@ public:
   };
 };
 
-typedef Vec4<float> CMP_Vec4f;
-typedef Vec4<double> CMP_Vec4d;
-typedef Vec4<int> CMP_Vec4i;
-typedef Vec4<unsigned int> CMP_Vec4ui;     // unsigned 16 bit x,y,x,w
-typedef Vec4<unsigned char> CMP_Vec4uc;    // unsigned 8  bit x,y,x,w
-
-typedef Vec4<unsigned char> CGU_Vec4uc;    // unsigned 8  bit x,y,x,w
-typedef Vec4<unsigned char> CGV_Vec4uc;    // unsigned 8  bit x,y,x,w
-
 #endif    // not ASPM_GPU
+
+#endif    // Intel only
 
 #endif    // Header Guard
