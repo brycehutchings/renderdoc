@@ -38,6 +38,7 @@
     <ProjectGuid>{7893E300-3ED0-7F4C-158F-67EA63934C57}</ProjectGuid>
     <Keyword>Win32Proj</Keyword>
     <RootNamespace>crash_generation_server</RootNamespace>
+    <WindowsTargetPlatformVersion>10.0.18362.0</WindowsTargetPlatformVersion>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Label="Configuration">
