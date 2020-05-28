@@ -979,6 +979,8 @@ bool ExceptionHandler::WriteMinidumpWithExceptionForProcess(
           exinfo->ContextRecord->Rip;
 #elif defined(_M_ARM64)
             exinfo->ContextRecord->Pc;
+#elif defined(_M_ARM)
+            exinfo->ContextRecord->Pc;    // Modification from google breakpad to support ARM.
 #else
 #error Unsupported platform
 #endif
