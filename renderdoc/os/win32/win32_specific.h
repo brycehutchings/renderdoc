@@ -120,7 +120,17 @@ inline uint32_t CountOnes(uint32_t value)
 #if ENABLED(RDOC_X64)
 inline uint64_t CountOnes(uint64_t value)
 {
+#if defined(_M_ARM) || defined(_M_ARM64)
+  // TODO: Port 32-bit efficient implementation to 64-bit if needed.
+  uint32_t count = 0;
+  for(; value > 0; value >>= 1)
+  {
+    count += (value & 1);
+  }
+  return count;
+#else
   return __popcnt64(value);
+#endif
 }
 #endif
 };    // namespace Bits
