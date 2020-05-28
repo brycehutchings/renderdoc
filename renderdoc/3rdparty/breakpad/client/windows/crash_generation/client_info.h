@@ -30,7 +30,7 @@
 #ifndef CLIENT_WINDOWS_CRASH_GENERATION_CLIENT_INFO_H__
 #define CLIENT_WINDOWS_CRASH_GENERATION_CLIENT_INFO_H__
 
-#include <Windows.h>
+#include <windows.h>
 #include "dbghelp/DbgHelp.h"
 #include "breakpad/client/windows/common/ipc_protocol.h"
 #include "breakpad/common/scoped_ptr.h"
@@ -51,7 +51,6 @@ class ClientInfo {
              MINIDUMP_TYPE dump_type,
              DWORD* thread_id,
              EXCEPTION_POINTERS** ex_info,
-             AppMemoryInfo* app_mem_info,
              MDRawAssertionInfo* assert_info,
              const CustomClientInfo& custom_client_info);
 
@@ -92,14 +91,8 @@ class ClientInfo {
   bool GetClientExceptionInfo(EXCEPTION_POINTERS** ex_info) const;
   bool GetClientThreadId(DWORD* thread_id) const;
 
-  // Reads the custom memory regions from the client process address space.
-  bool PopulateAppMemory();
-
   // Reads the custom information from the client process address space.
   bool PopulateCustomInfo();
-  
-  // Returns the app memory information.
-  AppMemoryInfo GetAppMemory() const;
 
   // Returns the client custom information.
   CustomClientInfo GetCustomInfo() const;
@@ -134,20 +127,6 @@ class ClientInfo {
   // WARNING: Do not dereference these pointers as they are pointers
   // in the address space of another process.
   MDRawAssertionInfo* assert_info_;
-  
-  // Address of an instance of AppMemoryInfo in the client
-  // process address space that will contain information about
-  // user-specified memory regions to save.
-  //
-  // WARNING: Do not dereference these pointers as they are pointers
-  // in the address space of another process.
-  AppMemoryInfo* app_memory_info_ptr_;
-
-  // Contains the memory region entries read from the client process
-  // memory. This will be populated only if the method GetClientAppMemory
-  // is called.
-  scoped_array<AppMemory> app_memory_entries_;
-  ULONG app_memory_count_;
 
   // Custom information about the client.
   CustomClientInfo custom_client_info_;

@@ -96,15 +96,14 @@ CrashGenerationClient::CrashGenerationClient(
     const CustomClientInfo* custom_info)
         : pipe_name_(pipe_name),
           pipe_handle_(NULL),
+          custom_info_(),
           dump_type_(dump_type),
-          thread_id_(0),
-          server_process_id_(0),
           crash_event_(NULL),
           crash_generated_(NULL),
           server_alive_(NULL),
-          exception_pointers_(NULL),
-		  app_memory_info_(),
-          custom_info_() {
+          server_process_id_(0),
+          thread_id_(0),
+          exception_pointers_(NULL) {
   memset(&assert_info_, 0, sizeof(assert_info_));
   if (custom_info) {
     custom_info_ = *custom_info;
@@ -117,15 +116,14 @@ CrashGenerationClient::CrashGenerationClient(
     const CustomClientInfo* custom_info)
         : pipe_name_(),
           pipe_handle_(pipe_handle),
+          custom_info_(),
           dump_type_(dump_type),
-          thread_id_(0),
-          server_process_id_(0),
           crash_event_(NULL),
           crash_generated_(NULL),
           server_alive_(NULL),
-          exception_pointers_(NULL),
-		  app_memory_info_(),
-          custom_info_() {
+          server_process_id_(0),
+          thread_id_(0),
+          exception_pointers_(NULL) {
   memset(&assert_info_, 0, sizeof(assert_info_));
   if (custom_info) {
     custom_info_ = *custom_info;
@@ -194,11 +192,6 @@ bool CrashGenerationClient::Register() {
   return success;
 }
 
-void CrashGenerationClient::SetAppMemory(AppMemory *mem, ULONG count) {
-  app_memory_info_.entries = mem;
-  app_memory_info_.count = count;
-}
-
 bool CrashGenerationClient::RequestUpload(DWORD crash_id) {
   HANDLE pipe = ConnectToServer();
   if (!pipe) {
@@ -208,7 +201,7 @@ bool CrashGenerationClient::RequestUpload(DWORD crash_id) {
   CustomClientInfo custom_info = {NULL, 0};
   ProtocolMessage msg(MESSAGE_TAG_UPLOAD_REQUEST, crash_id,
                       static_cast<MINIDUMP_TYPE>(NULL), NULL, NULL, NULL,
-                      custom_info, NULL, NULL, NULL, NULL);
+                      custom_info, NULL, NULL, NULL);
   DWORD bytes_count = 0;
   bool success = WriteFile(pipe, &msg, sizeof(msg), &bytes_count, NULL) != 0;
 
@@ -241,7 +234,6 @@ bool CrashGenerationClient::RegisterClient(HANDLE pipe) {
                       &exception_pointers_,
                       &assert_info_,
                       custom_info_,
-					  &app_memory_info_,
                       NULL,
                       NULL,
                       NULL);

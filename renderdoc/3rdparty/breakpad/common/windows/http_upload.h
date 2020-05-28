@@ -31,32 +31,55 @@
 // request using wininet.  It currently supports requests that contain
 // a set of string parameters (key/value pairs), and a file to upload.
 
-#ifndef COMMON_WINDOWS_HTTP_UPLOAD_H__
-#define COMMON_WINDOWS_HTTP_UPLOAD_H__
+#ifndef COMMON_WINDOWS_HTTP_UPLOAD_H_
+#define COMMON_WINDOWS_HTTP_UPLOAD_H_
 
-#pragma warning( push )
+#pragma warning(push)
 // Disable exception handler warnings.
-#pragma warning( disable : 4530 ) 
+#pragma warning(disable : 4530)
 
-#include <Windows.h>
-#include <WinInet.h>
+#include <windows.h>
+#include <wininet.h>
 
 #include <map>
-#include <string>
-#include <vector>
 
 namespace google_breakpad {
 
 using std::string;
 using std::wstring;
 using std::map;
-using std::vector;
 
 class HTTPUpload {
  public:
-  // Sends the given set of parameters, along with the contents of
-  // upload_file, as a multipart POST request to the given URL.
-  // file_part_name contains the name of the file part of the request
+  // Sends a PUT request containing the data in |path| to the given
+  // URL.
+  // Only HTTP(S) URLs are currently supported.  Returns true on success.
+  // If the request is successful and response_body is non-NULL,
+  // the response body will be returned in response_body.
+  // If response_code is non-NULL, it will be set to the HTTP response code
+  // received (or 0 if the request failed before getting an HTTP response).
+  static bool SendPutRequest(
+      const wstring& url,
+      const wstring& path,
+      int* timeout_ms,
+      wstring* response_body,
+      int* response_code);
+
+  // Sends a GET request to the given URL.
+  // Only HTTP(S) URLs are currently supported.  Returns true on success.
+  // If the request is successful and response_body is non-NULL,
+  // the response body will be returned in response_body.
+  // If response_code is non-NULL, it will be set to the HTTP response code
+  // received (or 0 if the request failed before getting an HTTP response).
+  static bool SendGetRequest(
+      const wstring& url,
+      int* timeout_ms,
+      wstring* response_body,
+      int* response_code);
+
+  // Sends the given sets of parameters and files as a multipart POST
+  // request to the given URL.
+  // Each key in |files| is the name of the file part of the request
   // (i.e. it corresponds to the name= attribute on an <input type="file">.
   // Parameter names must contain only printable ASCII characters,
   // and may not contain a quote (") character.
@@ -65,52 +88,29 @@ class HTTPUpload {
   // the response body will be returned in response_body.
   // If response_code is non-NULL, it will be set to the HTTP response code
   // received (or 0 if the request failed before getting an HTTP response).
-  static bool SendRequest(const wstring &url,
-                          const map<wstring, wstring> &parameters,
-                          const wstring &upload_file,
-                          const wstring &file_part_name,
-                          int *timeout,
-                          wstring *response_body,
-                          int *response_code);
+  static bool SendMultipartPostRequest(
+      const wstring& url,
+      const map<wstring, wstring>& parameters,
+      const map<wstring, wstring>& files,
+      int *timeout_ms,
+      wstring *response_body,
+      int *response_code);
+
+  // Sends a POST request, with the body set to |body|, to the given URL.
+  // Only HTTP(S) URLs are currently supported.  Returns true on success.
+  // If the request is successful and response_body is non-NULL,
+  // the response body will be returned in response_body.
+  // If response_code is non-NULL, it will be set to the HTTP response code
+  // received (or 0 if the request failed before getting an HTTP response).
+  static bool SendSimplePostRequest(
+      const wstring& url,
+      const wstring& body,
+      const wstring& content_type,
+      int *timeout_ms,
+      wstring *response_body,
+      int *response_code);
 
  private:
-  class AutoInternetHandle;
-
-  // Retrieves the HTTP response.  If NULL is passed in for response,
-  // this merely checks (via the return value) that we were successfully
-  // able to retrieve exactly as many bytes of content in the response as
-  // were specified in the Content-Length header.
-  static bool HTTPUpload::ReadResponse(HINTERNET request, wstring* response);
-
-  // Generates a new multipart boundary for a POST request
-  static wstring GenerateMultipartBoundary();
-
-  // Generates a HTTP request header for a multipart form submit.
-  static wstring GenerateRequestHeader(const wstring &boundary);
-
-  // Given a set of parameters, an upload filename, and a file part name,
-  // generates a multipart request body string with these parameters
-  // and minidump contents.  Returns true on success.
-  static bool GenerateRequestBody(const map<wstring, wstring> &parameters,
-                                  const wstring &upload_file,
-                                  const wstring &file_part_name,
-                                  const wstring &boundary,
-                                  string *request_body);
-
-  // Fills the supplied vector with the contents of filename.
-  static bool GetFileContents(const wstring &filename, vector<char> *contents);
-
-  // Converts a UTF8 string to UTF16.
-  static wstring UTF8ToWide(const string &utf8);
-
-  // Converts a UTF16 string to UTF8.
-  static string WideToUTF8(const wstring &wide);
-
-  // Checks that the given list of parameters has only printable
-  // ASCII characters in the parameter name, and does not contain
-  // any quote (") characters.  Returns true if so.
-  static bool CheckParameters(const map<wstring, wstring> &parameters);
-
   // No instances of this class should be created.
   // Disallow all constructors, destructors, and operator=.
   HTTPUpload();
@@ -121,6 +121,6 @@ class HTTPUpload {
 
 }  // namespace google_breakpad
 
-#pragma warning( pop )
+#pragma warning(pop)
 
-#endif  // COMMON_WINDOWS_HTTP_UPLOAD_H__
+#endif  // COMMON_WINDOWS_HTTP_UPLOAD_H_

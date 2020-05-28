@@ -1,5 +1,4 @@
-// Copyright (c) 2008, Google Inc.
-// All rights reserved.
+// Copyright 2013 Google Inc. All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
 // modification, are permitted provided that the following conditions are
@@ -27,55 +26,39 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#ifndef CLIENT_WINDOWS_COMMON_AUTO_CRITICAL_SECTION_H__
-#define CLIENT_WINDOWS_COMMON_AUTO_CRITICAL_SECTION_H__
+// Utilities for loading debug streams and tables from a PDB file.
 
-#include <windows.h>
+#ifndef COMMON_WINDOWS_DIA_UTIL_H_
+#define COMMON_WINDOWS_DIA_UTIL_H_
+
+#include <Windows.h>
+#include <dia2.h>
 
 namespace google_breakpad {
 
-// Automatically enters the critical section in the constructor and leaves
-// the critical section in the destructor.
-class AutoCriticalSection {
- public:
-  // Creates a new instance with the given critical section object
-  // and enters the critical section immediately.
-  explicit AutoCriticalSection(CRITICAL_SECTION* cs) : cs_(cs), taken_(false) {
-    assert(cs_);
-    Acquire();
-  }
+// Find the debug stream of the given |name| in the given |session|. Returns
+// true on success, false on error of if the stream does not exist. On success
+// the stream will be returned via |debug_stream|.
+bool FindDebugStream(const wchar_t* name,
+                     IDiaSession* session,
+                     IDiaEnumDebugStreamData** debug_stream);
 
-  // Destructor: leaves the critical section.
-  ~AutoCriticalSection() {
-    if (taken_) {
-      Release();
-    }
-  }
+// Finds the first table implementing the COM interface with ID |iid| in the
+// given |session|. Returns true on success, false on error or if no such
+// table is found. On success the table will be returned via |table|.
+bool FindTable(REFIID iid, IDiaSession* session, void** table);
 
-  // Enters the critical section. Recursive Acquire() calls are not allowed.
-  void Acquire() {
-    assert(!taken_);
-    EnterCriticalSection(cs_);
-    taken_ = true;
-  }
-
-  // Leaves the critical section. The caller should not call Release() unless
-  // the critical seciton has been entered already.
-  void Release() {
-    assert(taken_);
-    taken_ = false;
-    LeaveCriticalSection(cs_);
-  }
-
- private:
-  // Disable copy ctor and operator=.
-  AutoCriticalSection(const AutoCriticalSection&);
-  AutoCriticalSection& operator=(const AutoCriticalSection&);
-
-  CRITICAL_SECTION* cs_;
-  bool taken_;
-};
+// A templated version of FindTable. Finds the first table implementing type
+// |InterfaceType| in the given |session|. Returns true on success, false on
+// error or if no such table is found. On success the table will be returned via
+// |table|.
+template<typename InterfaceType>
+bool FindTable(IDiaSession* session, InterfaceType** table) {
+  return FindTable(__uuidof(InterfaceType),
+                   session,
+                   reinterpret_cast<void**>(table));
+}
 
 }  // namespace google_breakpad
 
-#endif  // CLIENT_WINDOWS_COMMON_AUTO_CRITICAL_SECTION_H__
+#endif  // COMMON_WINDOWS_DIA_UTIL_H_

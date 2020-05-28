@@ -30,7 +30,7 @@
 #ifndef CLIENT_WINDOWS_COMMON_IPC_PROTOCOL_H__
 #define CLIENT_WINDOWS_COMMON_IPC_PROTOCOL_H__
 
-#include <Windows.h>
+#include <windows.h>
 #include "dbghelp/DbgHelp.h"
 #include <string>
 #include <utility>
@@ -38,33 +38,12 @@
 #include "breakpad/google_breakpad/common/minidump_format.h"
 
 namespace google_breakpad {
-	
-// These entries store a list of memory regions that the client wants included
-// in the minidump.
-struct AppMemory {
-  ULONG64 ptr;
-  ULONG length;
-
-  bool operator==(const struct AppMemory& other) const {
-    return ptr == other.ptr;
-  }
-
-  bool operator==(const void* other) const {
-    return ptr == reinterpret_cast<ULONG64>(other);
-  }
-};
-
-struct AppMemoryInfo {
-  AppMemoryInfo() : entries(NULL), count(0) {}
-  const AppMemory* entries;
-  ULONG count;
-};
 
 // Name/value pair for custom client information.
 struct CustomInfoEntry {
   // Maximum length for name and value for client custom info.
   static const int kNameMaxLength = 64;
-  static const int kValueMaxLength = 320; // large enough for MAX_PATH
+  static const int kValueMaxLength = 64;
 
   CustomInfoEntry() {
     // Putting name and value in initializer list makes VC++ show warning 4351.
@@ -130,7 +109,6 @@ struct ProtocolMessage {
         exception_pointers(NULL),
         assert_info(NULL),
         custom_client_info(),
-		app_memory_info(NULL),
         dump_request_handle(NULL),
         dump_generated_handle(NULL),
         server_alive_handle(NULL) {
@@ -144,7 +122,6 @@ struct ProtocolMessage {
                   EXCEPTION_POINTERS** arg_exception_pointers,
                   MDRawAssertionInfo* arg_assert_info,
                   const CustomClientInfo& custom_info,
-				  AppMemoryInfo* app_mem_info,
                   HANDLE arg_dump_request_handle,
                   HANDLE arg_dump_generated_handle,
                   HANDLE arg_server_alive)
@@ -155,7 +132,6 @@ struct ProtocolMessage {
       exception_pointers(arg_exception_pointers),
       assert_info(arg_assert_info),
       custom_client_info(custom_info),
-	  app_memory_info(app_mem_info),
       dump_request_handle(arg_dump_request_handle),
       dump_generated_handle(arg_dump_generated_handle),
       server_alive_handle(arg_server_alive) {
@@ -180,9 +156,6 @@ struct ProtocolMessage {
   // Assert information in case of an invalid parameter or
   // pure call failure.
   MDRawAssertionInfo* assert_info;
-
-  // Custom specified app regions of memory
-  AppMemoryInfo* app_memory_info;
 
   // Custom client information.
   CustomClientInfo custom_client_info;

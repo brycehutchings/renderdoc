@@ -57,8 +57,8 @@
 #define CLIENT_WINDOWS_HANDLER_EXCEPTION_HANDLER_H__
 
 #include <stdlib.h>
-#include <Windows.h>
-#include "dbghelp/DbgHelp.h"
+#include <windows.h>
+#include <dbghelp.h>
 #include <rpc.h>
 
 #pragma warning(push)
@@ -78,6 +78,22 @@ namespace google_breakpad {
 
 using std::vector;
 using std::wstring;
+
+// These entries store a list of memory regions that the client wants included
+// in the minidump.
+struct AppMemory {
+  ULONG64 ptr;
+  ULONG length;
+
+  bool operator==(const struct AppMemory& other) const {
+    return ptr == other.ptr;
+  }
+
+  bool operator==(const void* other) const {
+    return ptr == reinterpret_cast<ULONG64>(other);
+  }
+};
+typedef std::list<AppMemory> AppMemoryList;
 
 class ExceptionHandler {
  public:
@@ -222,7 +238,8 @@ class ExceptionHandler {
   // Convenience form of WriteMinidump which does not require an
   // ExceptionHandler instance.
   static bool WriteMinidump(const wstring &dump_path,
-                            MinidumpCallback callback, void* callback_context);
+                            MinidumpCallback callback, void* callback_context,
+                            MINIDUMP_TYPE dump_type = MiniDumpNormal);
 
   // Write a minidump of |child| immediately.  This can be used to
   // capture the execution state of |child| independently of a crash.
@@ -233,7 +250,8 @@ class ExceptionHandler {
                                     DWORD child_blamed_thread,
                                     const wstring& dump_path,
                                     MinidumpCallback callback,
-                                    void* callback_context);
+                                    void* callback_context,
+                                    MINIDUMP_TYPE dump_type = MiniDumpNormal);
 
   // Get the thread ID of the thread requesting the dump (either the exception
   // thread or any other thread that called WriteMinidump directly).  This
@@ -247,6 +265,15 @@ class ExceptionHandler {
     handle_debug_exceptions_ = handle_debug_exceptions;
   }
 
+  // Controls behavior of EXCEPTION_INVALID_HANDLE.
+  bool get_consume_invalid_handle_exceptions() const {
+    return consume_invalid_handle_exceptions_;
+  }
+  void set_consume_invalid_handle_exceptions(
+      bool consume_invalid_handle_exceptions) {
+    consume_invalid_handle_exceptions_ = consume_invalid_handle_exceptions;
+  }
+
   // Returns whether out-of-process dump generation is used or not.
   bool IsOutOfProcess() const { return crash_generation_client_.get() != NULL; }
 
@@ -254,7 +281,6 @@ class ExceptionHandler {
   // at address p to be copied to the minidump when a crash happens.
   void RegisterAppMemory(void* ptr, size_t length);
   void UnregisterAppMemory(void* ptr);
-  const AppMemoryList &QueryRegisteredAppMemory() { return app_memory_info_; }
 
  private:
   friend class AutoExceptionHandler;
@@ -456,6 +482,10 @@ class ExceptionHandler {
   // EXCEPTION_SINGLE_STEP exceptions.  Leave this false (the default)
   // to not interfere with debuggers.
   bool handle_debug_exceptions_;
+
+  // If true, the handler will consume any EXCEPTION_INVALID_HANDLE exceptions.
+  // Leave this false (the default) to handle these exceptions as normal.
+  bool consume_invalid_handle_exceptions_;
 
   // Callers can request additional memory regions to be included in
   // the dump.

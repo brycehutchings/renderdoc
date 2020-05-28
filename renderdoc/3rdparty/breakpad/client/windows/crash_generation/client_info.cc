@@ -32,7 +32,6 @@
 
 static const wchar_t kCustomInfoProcessUptimeName[] = L"ptime";
 static const size_t kMaxCustomInfoEntries = 4096;
-static const size_t kMaxAppMemoryEntries = 4096;
 
 namespace google_breakpad {
 
@@ -41,14 +40,12 @@ ClientInfo::ClientInfo(CrashGenerationServer* crash_server,
                        MINIDUMP_TYPE dump_type,
                        DWORD* thread_id,
                        EXCEPTION_POINTERS** ex_info,
-					   AppMemoryInfo* app_mem_info,
                        MDRawAssertionInfo* assert_info,
                        const CustomClientInfo& custom_client_info)
     : crash_server_(crash_server),
       pid_(pid),
       dump_type_(dump_type),
       ex_info_(ex_info),
-	  app_memory_info_ptr_(app_mem_info),
       assert_info_(assert_info),
       custom_client_info_(custom_client_info),
       thread_id_(thread_id),
@@ -70,8 +67,10 @@ bool ClientInfo::Initialize() {
   // The crash_id will be the low order word of the process creation time.
   FILETIME creation_time, exit_time, kernel_time, user_time;
   if (GetProcessTimes(process_handle_, &creation_time, &exit_time,
-                      &kernel_time, &user_time))
-    crash_id_ = creation_time.dwLowDateTime;
+                      &kernel_time, &user_time)) {
+    start_time_ = creation_time;
+  }
+  crash_id_ = start_time_.dwLowDateTime;
 
   dump_requested_handle_ = CreateEvent(NULL,    // Security attributes.
                                        TRUE,    // Manual reset.
@@ -180,41 +179,6 @@ void ClientInfo::SetProcessUptime() {
   _i64tow_s(delay, value, CustomInfoEntry::kValueMaxLength, 10);
 }
 
-bool ClientInfo::PopulateAppMemory() {
-  AppMemoryInfo info;
-
-  SIZE_T read_count = sizeof(AppMemoryInfo);
-  SIZE_T bytes_count = 0;
-	
-  if (!ReadProcessMemory(process_handle_,
-                         app_memory_info_ptr_,
-                         (void *)&info,
-                         read_count,
-                         &bytes_count)) {
-    return false;
-  }
-
-  if (info.count > kMaxAppMemoryEntries)
-    return false;
-
-  app_memory_entries_.reset(
-        new AppMemory[info.count]);
-
-  app_memory_count_ = info.count;
-
-  read_count = sizeof(AppMemory) * info.count;
-
-  if (!ReadProcessMemory(process_handle_,
-                         info.entries,
-                         app_memory_entries_.get(),
-                         read_count,
-                         &bytes_count)) {
-    return false;
-  }
-
-  return (bytes_count == read_count);
-}
-
 bool ClientInfo::PopulateCustomInfo() {
   if (custom_client_info_.count > kMaxCustomInfoEntries)
     return false;
@@ -245,13 +209,6 @@ bool ClientInfo::PopulateCustomInfo() {
 
   SetProcessUptime();
   return (bytes_count == read_count);
-}
-
-AppMemoryInfo ClientInfo::GetAppMemory() const {
-  AppMemoryInfo app_memory_info;
-  app_memory_info.entries = app_memory_entries_.get();
-  app_memory_info.count = app_memory_count_;
-  return app_memory_info;
 }
 
 CustomClientInfo ClientInfo::GetCustomInfo() const {

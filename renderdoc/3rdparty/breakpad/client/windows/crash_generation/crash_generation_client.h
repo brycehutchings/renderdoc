@@ -33,7 +33,6 @@
 #include <windows.h>
 #include "dbghelp/dbghelp.h"
 #include <string>
-#include <vector>
 #include <utility>
 #include "breakpad/client/windows/common/ipc_protocol.h"
 #include "breakpad/common/scoped_ptr.h"
@@ -41,9 +40,6 @@
 namespace google_breakpad {
 
 struct CustomClientInfo;
-struct AppMemory;
-
-typedef std::vector<AppMemory> AppMemoryList;
 
 // Abstraction of client-side implementation of out of process
 // crash generation.
@@ -80,8 +76,6 @@ class CrashGenerationClient {
   //
   // Returns true if the registration is successful; false otherwise.
   bool Register();
-
-  void SetAppMemory(AppMemory *mem, ULONG count);
 
   // Requests the crash server to upload a previous dump with the
   // given crash id.
@@ -148,8 +142,6 @@ class CrashGenerationClient {
   // Pipe handle duplicated from server process. Only valid before
   // Register is called.
   HANDLE pipe_handle_;
-
-  AppMemoryInfo app_memory_info_;
 
   // Custom client information
   CustomClientInfo custom_info_;
