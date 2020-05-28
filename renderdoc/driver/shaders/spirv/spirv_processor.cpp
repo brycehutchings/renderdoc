@@ -1349,7 +1349,7 @@ ShaderVariable Processor::EvaluateConstant(Id constID, const rdcarray<SpecConsta
 
     for(uint32_t col = 0; col < cols; col++)
     {
-      ShaderValue a, b;
+      ShaderValue a{}, b{};
 
       bool signedness = retType.scalar().signedness;
 
